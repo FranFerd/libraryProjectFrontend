@@ -29,7 +29,6 @@
       const response = await axios.get('http://localhost:5000/books')
       books.value = response.data
       book.value = initBook()
-      console.log(book.value)
     }
     catch(error){
       console.error(error)
