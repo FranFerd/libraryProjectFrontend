@@ -14,3 +14,12 @@ export interface BookDescription {
     title: string,
     yearOfPublish: string
 }
+
+export interface BookToPost {
+    title: string,
+    author: string,
+    pages: string,
+    yearOfPublish: string,
+    description: string,
+    image: File | null
+}

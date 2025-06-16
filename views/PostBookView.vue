@@ -1,79 +1,82 @@
-<script setup>
+<script setup lang="ts">
 
-  import { ref } from 'vue';
-  import axios from 'axios';
-  import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+import axios from 'axios';
+import { useRouter } from 'vue-router';
+import type { BookToPost } from '@/types/Book';
 
+const router = useRouter()
 
-  const formData = ref({
-    title: '',
-    author: '',
-    pages: '',
-    yearOfPublish: '',
-    description: '',
-    image: null
-  })
+const formData = ref<BookToPost>({
+  title: '',
+  author: '',
+  pages: '',
+  yearOfPublish: '',
+  description: '',
+  image: null
+})
 
-  const message = ref('')
-  const isDisabledButton = ref(false)
-  const router = useRouter()
-  const successMessage = ref(false)
+const message = ref<string>('')
+const isDisabledButton = ref(false)
+const isSuccessMessage = ref(false)
 
-  async function redirectToBook(time, data){
-    setTimeout(async () => {
-      const bookId = await(getBookId(data))
-      router.push(
-      {path: `/book-item/${bookId}`})
-    }, time);
+async function redirectToBook(time: number, data: FormData): Promise<void>{
+  setTimeout(async () => {
+    const bookId = await(getBookId(data))
+    router.push(
+    {path: `/book-item/${bookId}`})
+}, time);
+}
+
+async function getBookId(data: FormData): Promise<number>{
+  try {
+    const response = await axios.post('http://localhost:5000/book-id', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.bookId;
+  } 
+  catch (error) {
+    console.error('Error fetching bookId:', error);
+    throw error; 
+  }
+}
+
+async function submitForm(): Promise<void>{
+  try{
+    const data = new FormData()
+    data.append('title', formData.value.title);
+    data.append('author', formData.value.author);
+    data.append('pages', formData.value.pages);
+    data.append('yearOfPublish', formData.value.yearOfPublish);
+    data.append('description', formData.value.description);
+    data.append('image', formData.value.image);
+
+  const response = await axios.post('http://localhost:5000/upload', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+  if(response.status === 200){
+    message.value = 'File and data uploaded successfully. Redirecting to the book page...'
+    isDisabledButton.value = true
+    isSuccessMessage.value = true
+    redirectToBook(1500, data)
+  }
+  else{
+    message.value = 'Failed to upload file and data'
   }
 
-  async function getBookId(data){
-    try {
-      const response = await axios.post('http://localhost:5000/book-id', data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return response.data.bookId;
-    } 
-    catch (error) {
-      console.error('Error fetching bookId:', error);
-      throw error; 
-    }
   }
-
-  async function submitForm(){
-    try{
-      const data = new FormData()
-      data.append('title', formData.value.title);
-      data.append('author', formData.value.author);
-      data.append('pages', formData.value.pages);
-      data.append('yearOfPublish', formData.value.yearOfPublish);
-      data.append('description', formData.value.description);
-      data.append('image', formData.value.image);
-
-      const response = await axios.post('http://localhost:5000/upload', data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      if(response.status === 200){
-        message.value = 'File and data uploaded successfully. Redirecting to the book page...'
-        isDisabledButton.value = true
-        successMessage.value = true
-        redirectToBook(1500, data)
-      }
-      else{
-        message.value = 'Failed to upload file and data'
-      }
-
-    }
-    catch(error){
-      console.error('Error: ', error)
-      message.value = 'An error ocurred while uploading'
-    }
+  catch(error){
+    console.error('Error: ', error)
+    message.value = 'An error ocurred while uploading'
   }
+}
 
-  function handleFileUpload(event){
-    formData.value.image = event.target.files[0]
-  }
+function handleFileUpload(event: Event){          // event.target is the element that triggered the event
+  const target = event.target as HTMLInputElement // By default event.target is EventTarget type, which doesn't have .files
+  const file = target.files[0]                    // So I assert that event.target is HTMLInputElement, which has .files
+  formData.value.image = file
+}
 
 
 </script>
@@ -101,7 +104,7 @@
 
         <button type="submit" :disabled="isDisabledButton">Upload</button>
     </form>
-    <p v-if="message" :class="{success : successMessage, error : !successMessage }">{{ message }}</p>
+    <p v-if="message" :class="{success : isSuccessMessage, error : !isSuccessMessage }">{{ message }}</p>
     </div>
   </template>
   

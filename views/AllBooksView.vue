@@ -15,7 +15,6 @@
         try{
             const response = await axios.get('http://localhost:5000/books')
             books.value = response.data
-            console.log(books.value)
         }
         catch(error){
             console.error(error)
