@@ -6,10 +6,10 @@ export const useModeStore = defineStore('mode', {
         deleteMode: false
     }),
     actions: {
-        setEditMode(value) {
+        setEditMode(value: boolean) {
             this.editMode = value
         },
-        setDeleteMode(value){
+        setDeleteMode(value: boolean){
             this.deleteMode = value
         }
     }
