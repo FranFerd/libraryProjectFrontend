@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
   import { ref } from 'vue';
   import { useRouter, useRoute} from 'vue-router';
 
   const router = useRouter()
-  const searchValue = ref()
+  const searchValue = ref<string>('')
 
-  function pushToUrl() {
+  function pushToUrl(): void {
   if (!searchValue.value?.trim()) {
     alert('Please enter a search term');
     return;
@@ -16,17 +16,13 @@
   });
 }
 
-
-
-
-  function isActive(urlComponent){
+  function isActive(urlComponent: string): boolean{
     const route = useRoute()
     if (route.fullPath.includes(urlComponent)){
       return true
     }
+    return false
   }
-
-
 </script> 
 
 <template>
