@@ -1,20 +1,10 @@
-<script setup>
+<script setup lang="ts">
     import axios from 'axios';
     import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
 
     const route = useRoute()
     const router = useRouter()
-    const editMessage = ref(null)
-    const deleteMessage = ref(null)
-    const newImage = ref(null)
-    const originalValues = ref({})
-    const bookId = route.fullPath.slice(11)
-    const isDeleted = ref(false)
-    const isDisabledButton = ref(false)
-    const successMessage = ref(false)
-
-
 
     const props = defineProps({
         bookDescription: Object,
@@ -27,9 +17,29 @@
             default: false
         }
     })
+    const bookId = route.fullPath.slice(11)
+
+    const editMessage = ref<string>('')
+    const deleteMessage = ref('')
+    const isSuccessMessage = ref(false)
+
+    const newImage = ref(null)
+    const originalValues = ref({})
+
+    const isDeleted = ref(false)
+    const isDisabledButton = ref(false)
 
     const editMode = ref(props.editMode)
     const deleteMode = ref(props.deleteMode)
+
+    const formData = ref({
+        title: '',
+        author: '',
+        pages: '',
+        yearOfPublish: '', 
+        description: '',
+        image: originalValues.value.image,
+    })
 
     watch(
         () => props.bookDescription,
@@ -48,14 +58,6 @@
         { immediate: true }
     )
 
-    const formData = ref({
-        title: '',
-        author: '',
-        pages: '',
-        yearOfPublish: '', 
-        description: '',
-        image: originalValues.value.image,
-    })
 
     function cacheOriginalValues() {
         formData.value = {
@@ -97,7 +99,7 @@
             const response = await axios.delete(`http://127.0.0.1:5000/book-delete/${bookId}`)
             if (response.status === 200){
                 isDeleted.value = true
-                successMessage.value = true
+                isSuccessMessage.value = true
                 deleteMessage.value = 'Book deleted successfully. Redirecting to home page...'
                 setTimeout(() => {
                     router.push(
@@ -111,7 +113,7 @@
         }
     }
 
-    async function submitChanges(){
+    async function submitChanges(): Promise<void>{
 
         try{
             const data = new FormData()
@@ -130,7 +132,7 @@
             })
             if (response.status == 200) {
                 isDisabledButton.value = true
-                successMessage.value = true
+                isSuccessMessage.value = true
                 editMessage.value = 'Book updated successfully. Reloading page...'
                 setTimeout(() => {
                     window.location.reload()
@@ -148,8 +150,9 @@
 
     }
 
-    function handleFileUpload(event){
-        const file = event.target.files[0]
+    function handleFileUpload(event: Event){
+        const target = event.target as HTMLInputElement
+        const file = target.files[0]
         if(file){
             if(newImage.value) URL.revokeObjectURL(newImage.value)
             newImage.value = URL.createObjectURL(file)
@@ -197,7 +200,7 @@
                 <button type="submit" class="saveChanges" :disabled="isDisabledButton">
                     Save
                 </button>
-                <p v-if="editMessage" :class="{success : successMessage, error : !successMessage}">{{ editMessage }}</p>
+                <p v-if="editMessage" :class="{success : isSuccessMessage, error : !isSuccessMessage}">{{ editMessage }}</p>
             </form>
         </div>    
     </div>
@@ -232,7 +235,7 @@
             <button @click="toggleDelete()">No</button>
             <button @click="deleteBook(bookId)">Yes</button>
         </div>
-        <p v-if="deleteMessage" :class="{success : successMessage, error : !successMessage }">
+        <p v-if="deleteMessage" :class="{success : isSuccessMessage, error : !isSuccessMessage }">
             {{ deleteMessage }}
         </p>
     </div> 

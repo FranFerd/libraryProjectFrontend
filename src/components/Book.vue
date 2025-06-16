@@ -1,18 +1,17 @@
-<script setup>
+<script setup lang="ts">
     import { useRouter } from 'vue-router';
+    import type {BookPreview} from '../types/Book'
 
     const router = useRouter()
 
-    const props = defineProps({
-        book : {
-            type: Object,
-            required: true
-        }
-    })
+    const props = defineProps<{
+        book :  BookPreview
+    }>()
 
-    function navigateToBook(bookItem){
+
+    function navigateToBook(): void{
             router.push(
-            {path: `/book-item/${bookItem.id}`})
+            {path: `/book-item/${props.book.id}`})
         }
 
     const base64Image =  'data:image/png;base64, '
@@ -20,10 +19,10 @@
 </script>
 
 <template>
-    <div class="bookFlex" @click="navigateToBook(book)">
-        <img :src="base64Image + book.image" alt="book image didn't load">
-            <p class="bookTitle">{{ book.title }}</p>
-            <p class="bookAuthor">{{ book.author }}</p>
+    <div class="bookFlex" @click="navigateToBook()">
+        <img :src="base64Image + props.book.image" alt="book image didn't load">
+            <p class="bookTitle">{{ props.book.title }}</p>
+            <p class="bookAuthor">{{ props.book.author }}</p>
     </div>
 </template>
 

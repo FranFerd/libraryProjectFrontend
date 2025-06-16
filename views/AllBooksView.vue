@@ -1,13 +1,17 @@
-<script setup>
+<script setup lang="ts">
     import Book from '@/components/Book.vue';
     import { onMounted, ref } from 'vue';
     import axios from 'axios';
+    import type { BookDescription } from '../src/types/Book';
 
-    const books = ref()
+
+
+    // const books: Ref<Book[]> = ref([])
+    const books = ref<BookDescription[]>([])
     const isLoading = ref(true)
-    const isNotLoaded = ref(null)
+    const isNotLoaded = ref(false)
 
-    async function fetchApiBooks(){
+    async function fetchApiBooks(): Promise<void>{
         try{
             const response = await axios.get('http://localhost:5000/books')
             books.value = response.data
