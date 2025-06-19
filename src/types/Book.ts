@@ -6,12 +6,12 @@ export interface BookPreview{
 }
 
 export interface BookDescription {
+    title: string,
     author: string,
     description: string,
     id: number,
     image: string,
     pages: number,
-    title: string,
     yearOfPublish: string
 }
 
@@ -21,5 +21,14 @@ export interface BookToPost {
     pages: string,
     yearOfPublish: string,
     description: string,
-    image: File | null
+    image: File | null | string
+}
+
+export interface OriginalValues {
+    title: string,
+    author: string,
+    pages: number
+    yearOfPublish: string,
+    description: string,
+    image: string 
 }

@@ -4,9 +4,6 @@
     import axios from 'axios';
     import type { BookDescription } from '../src/types/Book';
 
-
-
-    // const books: Ref<Book[]> = ref([])
     const books = ref<BookDescription[]>([])
     const isLoading = ref(true)
     const isNotLoaded = ref(false)
