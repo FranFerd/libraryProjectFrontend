@@ -2,8 +2,9 @@
 import axios from 'axios';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import type { BookToPost, OriginalValues, BookDescription } from '../types/Book';
+import type { OriginalValues, BookDescription } from '../types/Book';
 import BookEditMode from './BookEditMode.vue';
+import BookOriginalDescription from './BookOriginalDescription.vue';
 
 const route = useRoute()
 const router = useRouter()
@@ -104,11 +105,9 @@ onBeforeUnmount(() => {
     <div class="book" v-if="originalValues">
         <img :src="newImage || 'data:image/png;base64, ' + originalValues.image" :alt=props.bookDescription.title>
         <div class="book__info" v-if="!editMode">
-            <p><em>Title</em> : {{ originalValues.title }}</p>
-            <p><em>Author</em> : {{ originalValues.author }}</p>
-            <p><em>Pages</em> : {{ originalValues.pages }}</p>
-            <p><em>Year of publish</em> : {{ originalValues.yearOfPublish }}</p>
-            <p><em>Description</em> : {{ originalValues.description }}</p>
+            <BookOriginalDescription
+            :originalValues="originalValues"
+            ></BookOriginalDescription>
         </div>
         <div class="book__info" v-if="editMode">
             <BookEditMode
