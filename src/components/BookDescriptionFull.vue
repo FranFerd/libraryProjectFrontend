@@ -1,100 +1,81 @@
 <script setup lang="ts">
     import axios from 'axios';
-    import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+    import { onBeforeUnmount, onMounted, ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
+    import type { BookToPost, OriginalValues, BookDescription } from '../types/Book';
 
     const route = useRoute()
     const router = useRouter()
 
-    const props = defineProps({
-        bookDescription: Object,
-        editMode: {
-            type: Boolean,
-            default: false
-        },
-        deleteMode: {
-            type: Boolean,
-            default: false
-        }
-    })
+    const props = defineProps<{
+        bookDescription: BookDescription,
+        editMode: Boolean
+        deleteMode: Boolean
+    }>()
+
     const bookId = route.fullPath.slice(11)
 
     const editMessage = ref<string>('')
     const deleteMessage = ref('')
     const isSuccessMessage = ref(false)
 
-    const newImage = ref(null)
-    const originalValues = ref({})
+    const newImage = ref<string | null>(null)
+    const originalValues = ref<OriginalValues | null>(null)
 
     const isDeleted = ref(false)
     const isDisabledButton = ref(false)
 
     const editMode = ref(props.editMode)
     const deleteMode = ref(props.deleteMode)
-
-    const formData = ref({
+    
+    const formData = ref<BookToPost>({
         title: '',
         author: '',
         pages: '',
         yearOfPublish: '', 
         description: '',
-        image: originalValues.value.image,
+        image: originalValues.value?.image ?? null
     })
 
-    watch(
-        () => props.bookDescription,
-        (newBookDescription) => {
-            if (newBookDescription) {
-                originalValues.value = {
-                    title: newBookDescription.title,         
-                    author: newBookDescription.author,
-                    pages: newBookDescription.pages,
-                    yearOfPublish: newBookDescription.yearOfPublish,
-                    description: newBookDescription.description,
-                    image: newBookDescription.image
-                }
-            }
-        },
-        { immediate: true }
-    )
-
-
-    function cacheOriginalValues() {
-        formData.value = {
+    function cacheOrResetOriginalValues(): void {
+        if(originalValues.value){
+            formData.value = {
                 title: originalValues.value.title,          
                 author: originalValues.value.author,        
-                pages: originalValues.value.pages,          
+                pages: String(originalValues.value.pages),          
                 yearOfPublish: originalValues.value.yearOfPublish,  
                 description: originalValues.value.description,
                 image: originalValues.value.image
             }
-    }
-
-    function toggleEdit() {
-        editMode.value = !editMode.value
-        deleteMode.value = false
-        if (editMode.value) {
-            cacheOriginalValues()
-        } else {
-            resetValues()
         }
     }
 
-    function resetValues() {
-        formData.value = { ...originalValues.value } 
+    function toggleEdit(): void {
+        editMode.value = !editMode.value
+        deleteMode.value = false
+        if(!editMode.value) resetValues() // reset when leaving
+    }
+
+    function resetValues(): void {
+        if(originalValues.value){
+            cacheOrResetOriginalValues()
+        }
+        const fileinput = ref<HTMLInputElement | null>(null)
         if (newImage.value) {
             URL.revokeObjectURL(newImage.value)
             newImage.value = null
         }
-        const fileinput = document.getElementById('image')
-        if (fileinput) fileinput.value = ''
+        if (fileinput.value) {
+            console.log(fileinput.value)
+            fileinput.value.value = ''
+        }
     }
 
-    function toggleDelete() {
+    function toggleDelete(): void {
         deleteMode.value = !deleteMode.value
     }
 
-    async function deleteBook(bookId) {
+    async function deleteBook(bookId: string) {
         try{
             const response = await axios.delete(`http://127.0.0.1:5000/book-delete/${bookId}`)
             if (response.status === 200){
@@ -113,18 +94,26 @@
         }
     }
 
-    async function submitChanges(): Promise<void>{
+    function addDataToSubmit(): FormData{
+        const data = new FormData()
 
-        try{
-            const data = new FormData()
-            data.append('id', bookId)
-            data.append('title', formData.value.title)
-            data.append('author', formData.value.author)
-            data.append('pages', formData.value.pages)
-            data.append('yearOfPublish', formData.value.yearOfPublish)
-            data.append('description', formData.value.description)
+        data.append('id', bookId)
+        data.append('title', formData.value.title)
+        data.append('author', formData.value.author)
+        data.append('pages', formData.value.pages)
+        data.append('yearOfPublish', formData.value.yearOfPublish)
+        data.append('description', formData.value.description)
+
+        if(formData.value.image) { // formData.image can be null
             data.append('image', formData.value.image)
+        }
 
+        return data
+    }
+
+    async function submitChanges(): Promise<void>{
+        try{
+            const data = addDataToSubmit()
             const response = await axios.put('http://127.0.0.1:5000/book-update', data, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -141,30 +130,40 @@
             else{
                 editMessage.value = "Failed to update book"
             }
-            
         }
         catch(error){
             console.error('Error: ', error)
             editMessage.value = 'An error ocurred while updating'
         }
-
     }
 
-    function handleFileUpload(event: Event){
+    function handleFileUpload(event: Event): void{
         const target = event.target as HTMLInputElement
-        const file = target.files[0]
+        const file = target.files?.[0]
         if(file){
             if(newImage.value) URL.revokeObjectURL(newImage.value)
             newImage.value = URL.createObjectURL(file)
             formData.value.image = file
         }
-        
+    }
+
+    function setOriginalValues(): void{
+        originalValues.value = {
+            title: props.bookDescription.title,         
+            author: props.bookDescription.author,
+            pages: props.bookDescription.pages,
+            yearOfPublish: props.bookDescription.yearOfPublish,
+            description: props.bookDescription.description,
+            image: props.bookDescription.image
+        }
     }
 
     onMounted(() => {
-        if (editMode.value){
-            cacheOriginalValues()
+        if(props.bookDescription){
+            setOriginalValues()
+            cacheOrResetOriginalValues() // fills form data
         }
+        console.log(props.bookDescription)
     })
 
     onBeforeUnmount(() => {
@@ -172,25 +171,23 @@
             URL.revokeObjectURL(newImage.value)
         }
     })
-
 </script>
 
 <template>
-
-    <div class="book">
-        <img :src="newImage || 'data:image/png;base64, ' + originalValues.image" :alt=bookDescription.title>
-        <div v-if="editMode">
-            <label for="image">Upload Image:</label>
-            <input type="file" id="image" @change="handleFileUpload" name="image" accept="image/*" required><br><br>
-        </div>
+    <div class="book" v-if="originalValues">
+        <img :src="newImage || 'data:image/png;base64, ' + originalValues.image" :alt=props.bookDescription.title>
         <div class="book__info" v-if="!editMode">
-            <p><em>Title</em> : {{originalValues.title}}</p>
-            <p><em>Author</em> : {{originalValues.author}}</p>
+            <p><em>Title</em> : {{ originalValues.title }}</p>
+            <p><em>Author</em> : {{ originalValues.author }}</p>
             <p><em>Pages</em> : {{ originalValues.pages }}</p>
             <p><em>Year of publish</em> : {{ originalValues.yearOfPublish }}</p>
             <p><em>Description</em> : {{ originalValues.description }}</p>
         </div>
         <div class="book__info" v-if="editMode">
+            <div>
+                <label for="image">Upload Image:</label>
+                <input type="file" id="image" ref="fileInput" @change="handleFileUpload" name="image" accept="image/*" required><br><br>
+            </div>
             <form @submit.prevent="submitChanges">
                 <p><em>Title</em> : <input type="text" id="title" v-model="formData.title"> </p>
                 <p><em>Author</em> : <input type="text" id="author" v-model="formData.author"></p>
@@ -239,8 +236,7 @@
             {{ deleteMessage }}
         </p>
     </div> 
-    </template>
-
+</template>
 <style scoped>
     .saveChanges{
         background-color: rgb(77, 184, 77);
