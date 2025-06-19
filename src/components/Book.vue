@@ -35,8 +35,8 @@
         cursor: pointer;
     }
     img{
-        width: 50%;
-        height: 100%;
+        width: 130px;
+        height: 200px;
         margin-right: auto;
         margin-left: auto;
         margin-top: 5px;
